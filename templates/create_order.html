@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+
+{% block title %}Create Order - Café Face Recognition System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-plus-circle"></i> Create New Order</h1>
+    <a href="{{ url_for('orders') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Orders
+    </a>
+</div>
+
+<form method="POST" id="orderForm">
+    <div class="row">
+        <!-- Customer Selection -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-user"></i> Customer Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="customer_id" class="form-label">Select Customer *</label>
+                        <select class="form-select" id="customer_id" name="customer_id" required onchange="loadCustomerInfo()">
+                            <option value="">Choose a customer...</option>
+                            {% for customer in customers %}
+                            <option value="{{ customer.id }}" 
+                                    data-name="{{ customer.name }}"
+                                    data-email="{{ customer.email or '' }}"
+                                    data-phone="{{ customer.phone or '' }}"
+                                    data-visits="{{ customer.visit_count }}">
+                                {{ customer.name }} ({{ customer.visit_count }} visits)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Customer Details Display -->
+                    <div id="customerDetails" style="display: none;">
+                        <div class="alert alert-info">
+                            <h6 id="customerName"></h6>
+                            <p class="mb-1" id="customerEmail"></p>
+                            <p class="mb-1" id="customerPhone"></p>
+                            <small id="customerVisits"></small>
+                        </div>
+                        
+                        <!-- Recommendations for selected customer -->
+                        <div id="customerRecommendations">
+                            <h6>Recommendations:</h6>
+                            <div id="recommendationsList">
+                                <!-- Will be loaded via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="{{ url_for('add_customer') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-user-plus"></i> Add New Customer
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5><i class="fas fa-receipt"></i> Order Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div id="orderSummary">
+                        <p class="text-muted">No items selected</p>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <strong>Total: <span id="totalAmount">$0.00</span></strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Menu Items -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-utensils"></i> Menu Items</h5>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="filterMenu('all')">All</button>
+                        <button type="button" class="btn btn-sm btn-outline-success me-2" onclick="filterMenu('food')">Food</button>
+                        <button type="button" class="btn btn-sm btn-outline-info" onclick="filterMenu('drink')">Drinks</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if menu_items %}
+                    <div class="row" id="menuItemsContainer">
+                        {% for item in menu_items %}
+                        <div class="col-md-6 mb-3 menu-item" data-category="{{ item.category }}">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="card-title">{{ item.name }}</h6>
+                                            <p class="card-text">
+                                                <span class="badge bg-secondary">{{ item.category }}</span>
+                                                {% if item.subcategory %}
+                                                    <span class="badge bg-light text-dark">{{ item.subcategory }}</span>
+                                                {% endif %}
+                                            </p>
+                                            {% if item.description %}
+                                            <p class="card-text">
+                                                <small class="text-muted">{{ item.description[:100] }}{% if item.description|length > 100 %}...{% endif %}</small>
+                                            </p>
+                                            {% endif %}
+                                            
+                                            {% if item.allergens %}
+                                            <p class="card-text">
+                                                <small class="text-warning">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                    Allergens: {{ item.allergens|join(', ') }}
+                                                </small>
+                                            </p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="h5 text-success mb-2">${{ "%.2f"|format(item.price) }}</div>
+                                            {% if item.calories %}
+                                            <small class="text-muted">{{ item.calories }} cal</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <div class="input-group input-group-sm">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="decreaseQuantity({{ item.id }})">-</button>
+                                            <input type="number" class="form-control text-center" 
+                                                   id="quantity_{{ item.id }}" 
+                                                   name="quantity_{{ item.id }}" 
+                                                   value="0" min="0" max="99"
+                                                   onchange="updateOrderSummary()"
+                                                   data-price="{{ item.price }}"
+                                                   data-name="{{ item.name }}">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="increaseQuantity({{ item.id }})">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted">
+                        <i class="fas fa-utensils fa-3x mb-3"></i>
+                        <p>No menu items available. <a href="{{ url_for('menu') }}">Add menu items</a> first.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order Notes and Submit -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Order Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                  placeholder="Special instructions, customizations, etc."></textarea>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" onclick="clearOrder()">
+                            <i class="fas fa-trash"></i> Clear Order
+                        </button>
+                        <button type="submit" class="btn btn-success btn-lg" id="submitOrder" disabled>
+                            <i class="fas fa-check"></i> Create Order
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let orderItems = {};
+let customerRecommendations = [];
+
+function loadCustomerInfo() {
+    const select = document.getElementById('customer_id');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (selectedOption.value) {
+        const customerDetails = document.getElementById('customerDetails');
+        const customerName = document.getElementById('customerName');
+        const customerEmail = document.getElementById('customerEmail');
+        const customerPhone = document.getElementById('customerPhone');
+        const customerVisits = document.getElementById('customerVisits');
+        
+        customerName.textContent = selectedOption.dataset.name;
+        customerEmail.textContent = selectedOption.dataset.email ? `📧 ${selectedOption.dataset.email}` : '';
+        customerPhone.textContent = selectedOption.dataset.phone ? `📞 ${selectedOption.dataset.phone}` : '';
+        customerVisits.textContent = `Total visits: ${selectedOption.dataset.visits}`;
+        
+        customerDetails.style.display = 'block';
+        
+        // Load recommendations
+        loadCustomerRecommendations(selectedOption.value);
+    } else {
+        document.getElementById('customerDetails').style.display = 'none';
+    }
+    
+    updateSubmitButton();
+}
+
+function loadCustomerRecommendations(customerId) {
+    fetch(`/api/get_recommendations/${customerId}`)
+        .then(response => response.json())
+        .then(data => {
+            customerRecommendations = data.recommendations || [];
+            displayRecommendations();
+        })
+        .catch(error => {
+            console.error('Error loading recommendations:', error);
+            document.getElementById('recommendationsList').innerHTML = '<small class="text-muted">Could not load recommendations</small>';
+        });
+}
+
+function displayRecommendations() {
+    const container = document.getElementById('recommendationsList');
+    
+    if (customerRecommendations.length === 0) {
+        container.innerHTML = '<small class="text-muted">No recommendations available</small>';
+        return;
+    }
+    
+    let html = '';
+    customerRecommendations.slice(0, 3).forEach(rec => {
+        html += `
+            <div class="recommendation-item mb-2 p-2 border rounded">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${rec.item.name}</strong>
+                        <br>
+                        <small class="text-muted">${rec.reason}</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-success" onclick="addRecommendedItem(${rec.item.id})">
+                        Add
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function addRecommendedItem(itemId) {
+    const quantityInput = document.getElementById(`quantity_${itemId}`);
+    if (quantityInput) {
+        increaseQuantity(itemId);
+        // Scroll to the item
+        quantityInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function increaseQuantity(itemId) {
+    const input = document.getElementById(`quantity_${itemId}`);
+    const currentValue = parseInt(input.value) || 0;
+    input.value = currentValue + 1;
+    updateOrderSummary();
+}
+
+function decreaseQuantity(itemId) {
+    const input = document.getElementById(`quantity_${itemId}`);
+    const currentValue = parseInt(input.value) || 0;
+    if (currentValue > 0) {
+        input.value = currentValue - 1;
+        updateOrderSummary();
+    }
+}
+
+function updateOrderSummary() {
+    const summaryContainer = document.getElementById('orderSummary');
+    const totalElement = document.getElementById('totalAmount');
+    
+    orderItems = {};
+    let total = 0;
+    let itemCount = 0;
+    
+    // Find all quantity inputs
+    const quantityInputs = document.querySelectorAll('input[name^="quantity_"]');
+    
+    quantityInputs.forEach(input => {
+        const quantity = parseInt(input.value) || 0;
+        if (quantity > 0) {
+            const price = parseFloat(input.dataset.price);
+            const name = input.dataset.name;
+            const itemId = input.name.replace('quantity_', '');
+            
+            orderItems[itemId] = {
+                name: name,
+                quantity: quantity,
+                price: price,
+                total: quantity * price
+            };
+            
+            total += quantity * price;
+            itemCount += quantity;
+        }
+    });
+    
+    // Update summary display
+    if (Object.keys(orderItems).length === 0) {
+        summaryContainer.innerHTML = '<p class="text-muted">No items selected</p>';
+    } else {
+        let summaryHtml = '';
+        Object.values(orderItems).forEach(item => {
+            summaryHtml += `
+                <div class="d-flex justify-content-between mb-1">
+                    <span>${item.quantity}x ${item.name}</span>
+                    <span>$${item.total.toFixed(2)}</span>
+                </div>
+            `;
+        });
+        summaryContainer.innerHTML = summaryHtml;
+    }
+    
+    totalElement.textContent = `$${total.toFixed(2)}`;
+    updateSubmitButton();
+}
+
+function updateSubmitButton() {
+    const submitButton = document.getElementById('submitOrder');
+    const customerSelected = document.getElementById('customer_id').value;
+    const hasItems = Object.keys(orderItems).length > 0;
+    
+    submitButton.disabled = !customerSelected || !hasItems;
+}
+
+function clearOrder() {
+    if (confirm('Are you sure you want to clear the current order?')) {
+        // Reset all quantity inputs
+        const quantityInputs = document.querySelectorAll('input[name^="quantity_"]');
+        quantityInputs.forEach(input => {
+            input.value = 0;
+        });
+        
+        // Clear order summary
+        orderItems = {};
+        updateOrderSummary();
+    }
+}
+
+function filterMenu(category) {
+    const menuItems = document.querySelectorAll('.menu-item');
+    const buttons = document.querySelectorAll('.card-header button');
+    
+    // Update button states
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Filter items
+    menuItems.forEach(item => {
+        if (category === 'all' || item.dataset.category === category) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Form submission
+document.getElementById('orderForm').addEventListener('submit', function(e) {
+    const customerSelected = document.getElementById('customer_id').value;
+    const hasItems = Object.keys(orderItems).length > 0;
+    
+    if (!customerSelected) {
+        e.preventDefault();
+        alert('Please select a customer');
+        return;
+    }
+    
+    if (!hasItems) {
+        e.preventDefault();
+        alert('Please add at least one item to the order');
+        return;
+    }
+    
+    // Show loading state
+    const submitButton = document.getElementById('submitOrder');
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Order...';
+    submitButton.disabled = true;
+});
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    updateOrderSummary();
+    
+    // Check if customer ID is provided in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const customerId = urlParams.get('customer_id');
+    if (customerId) {
+        document.getElementById('customer_id').value = customerId;
+        loadCustomerInfo();
+    }
+});
+</script>
+
+<style>
+.menu-item {
+    transition: opacity 0.3s ease;
+}
+
+.recommendation-item {
+    background-color: #f8f9fa;
+    border: 1px solid #28a745 !important;
+}
+
+.recommendation-item:hover {
+    background-color: #e9ecef;
+}
+
+.input-group-sm .form-control {
+    max-width: 60px;
+}
+
+.card-header button.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+@media (max-width: 768px) {
+    .col-md-4, .col-md-8 {
+        margin-bottom: 1rem;
+    }
+}
+</style>
+{% endblock %}

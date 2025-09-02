@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}{{ customer.name }} - Customer Details{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-user"></i> {{ customer.name }}</h1>
+    <div>
+        <a href="{{ url_for('create_order') }}?customer_id={{ customer.id }}" class="btn btn-success">
+            <i class="fas fa-shopping-cart"></i> Create Order
+        </a>
+        <a href="{{ url_for('customers') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Customers
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Customer Information -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Customer Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Name:</label>
+                    <p>{{ customer.name }}</p>
+                </div>
+                
+                {% if customer.email %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Email:</label>
+                    <p>{{ customer.email }}</p>
+                </div>
+                {% endif %}
+                
+                {% if customer.phone %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Phone:</label>
+                    <p>{{ customer.phone }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Total Visits:</label>
+                    <p><span class="badge bg-primary fs-6">{{ customer.visit_count }}</span></p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Member Since:</label>
+                    <p>{{ customer.created_at.split('T')[0] if 'T' in customer.created_at else customer.created_at }}</p>
+                </div>
+                
+                {% if customer.last_visit %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Last Visit:</label>
+                    <p>{{ customer.last_visit.split('T')[0] if 'T' in customer.last_visit else customer.last_visit }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Face Recognition Status -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-camera"></i> Recognition Status</h5>
+            </div>
+            <div class="card-body">
+                {% if customer.face_encoding_path %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    Face recognition is enabled for this customer.
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Face recognition not set up. 
+                    <a href="{{ url_for('add_customer') }}" class="alert-link">Set up now</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recommendations -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-lightbulb"></i> Personalized Recommendations</h5>
+            </div>
+            <div class="card-body">
+                {% if recommendations %}
+                <div class="row">
+                    {% for rec in recommendations %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ rec.item.name }}</h6>
+                                <p class="card-text">
+                                    <span class="badge bg-secondary">{{ rec.item.category }}</span>
+                                    {% if rec.item.subcategory %}
+                                        <span class="badge bg-light text-dark">{{ rec.item.subcategory }}</span>
+                                    {% endif %}
+                                </p>
+                                <p class="card-text">
+                                    <strong>${{ "%.2f"|format(rec.item.price) }}</strong>
+                                </p>
+                                <p class="card-text">
+                                    <small class="text-success">{{ rec.reason }}</small>
+                                </p>
+                                <div class="recommendation-badge">
+                                    Score: {{ "%.1f"|format(rec.score) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted">
+                    <i class="fas fa-lightbulb fa-3x mb-3"></i>
+                    <p>No recommendations available yet. Place a few orders to get personalized suggestions!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Order History -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Order History</h5>
+            </div>
+            <div class="card-body">
+                {% if order_history %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in order_history[:10] %}
+                            <tr>
+                                <td>{{ order.order_date.split('T')[0] if 'T' in order.order_date else order.order_date }}</td>
+                                <td>
+                                    {% for item in order.items %}
+                                    <span class="badge bg-light text-dark me-1">
+                                        {{ item.quantity }}x {{ item.item_name }}
+                                    </span>
+                                    {% endfor %}
+                                </td>
+                                <td><strong>${{ "%.2f"|format(order.total_amount) }}</strong></td>
+                                <td>{{ order.notes or '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if order_history|length > 10 %}
+                <div class="text-center">
+                    <small class="text-muted">Showing recent 10 orders out of {{ order_history|length }} total</small>
+                </div>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center text-muted">
+                    <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                    <p>No orders yet. <a href="{{ url_for('create_order') }}?customer_id={{ customer.id }}">Create the first order</a>!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+{% if order_history %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar"></i> Customer Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h4 class="text-primary">{{ order_history|length }}</h4>
+                        <small class="text-muted">Total Orders</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-success">${{ "%.2f"|format(order_history|sum(attribute='total_amount')) }}</h4>
+                        <small class="text-muted">Total Spent</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-info">${{ "%.2f"|format((order_history|sum(attribute='total_amount')) / (order_history|length)) }}</h4>
+                        <small class="text-muted">Average Order</small>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-warning">{{ (order_history|map(attribute='items')|list|flatten|length) }}</h4>
+                        <small class="text-muted">Total Items</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
