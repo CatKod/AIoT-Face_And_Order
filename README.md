@@ -1,6 +1,48 @@
 # 🏪 Café Face Recognition & Recommendation System
 
-A comprehensive AI-powered system for cafés that recognizes returning customers using face recognition and provides personalized food and drink recommendations based on their order history.
+A comprehensive AI-powered system for cafés that recognizes returning customers using face recognition and provides personalized food and drink recommendations based on their order history. Now with complete Docker containerization for easy deployment!
+
+## 🚀 Quick Start with Docker
+
+### Development Environment
+```bash
+# Start development environment
+./scripts/start-dev.sh
+
+# Access application at http://localhost:5000
+# Access pgAdmin at http://localhost:8080
+```
+
+### Production Environment
+```bash
+# Start production environment  
+./scripts/start-prod.sh
+
+# Access application at http://localhost
+# Access monitoring at http://localhost:3000 (Grafana)
+```
+
+## 🏗️ Docker Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Nginx Proxy   │    │  Flask App       │    │  PostgreSQL     │
+│   Port: 80/443  │◄──►│  Port: 5000      │◄──►│  Port: 5432     │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                        │                        │
+         │                        ▼                        │
+         │               ┌─────────────────┐                │
+         │               │     Redis       │                │
+         │               │   Port: 6379    │                │
+         │               └─────────────────┘                │
+         │                                                  │
+         ▼                                                  ▼
+┌─────────────────┐                               ┌─────────────────┐
+│   Monitoring    │                               │     pgAdmin     │
+│ Prometheus:9090 │                               │   Port: 8080    │
+│ Grafana: 3000   │                               └─────────────────┘
+└─────────────────┘
+```
 
 ## 🌟 Features
 

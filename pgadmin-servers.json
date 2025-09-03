@@ -1,0 +1,14 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "Cafe Database (Production)",
+            "Group": "Servers",
+            "Host": "postgres",
+            "Port": 5432,
+            "MaintenanceDB": "cafe_system",
+            "Username": "postgres",
+            "SSLMode": "prefer",
+            "Favorite": true
+        }
+    }
+}
