@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: cafe_system_dev
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: dev_password
+      POSTGRES_PASSWORD: 271205
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data

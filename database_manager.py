@@ -15,8 +15,8 @@ class DatabaseManager:
             'host': os.getenv('DB_HOST', 'localhost'),
             'port': os.getenv('DB_PORT', '5432'),
             'database': os.getenv('DB_NAME', 'cafe_system'),
-            'user': os.getenv('DB_USER', 'cafe_admin'),
-            'password': os.getenv('DB_PASSWORD', 'secure_cafe_password')
+            'user': os.getenv('DB_USER', 'postgres'),
+            'password': os.getenv('DB_PASSWORD', '271205')
         }
         self.init_database()
     
