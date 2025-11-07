@@ -1,0 +1,7 @@
+SERVER_URL: http://192.168.1.25:5000/
+ESP32_UPLOAD_ENDPOINT: http://192.168.1.25:5000/upload
+WEB_INTERFACE: http://192.168.1.25:5000/
+VIDEO_STREAM: http://192.168.1.25:5000/stream
+
+Note: IP WiFi của máy chạy Flask Server
+Kiểm tra bằng: ipconfig | findstr IPv4

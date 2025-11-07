@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32-CAM Face Detection Stream</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            max-width: 1200px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .status-bar {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            margin: 5px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.active {
+            background: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        .status-indicator.inactive {
+            background: #ff0000;
+            box-shadow: 0 0 10px #ff0000;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            background: #000;
+        }
+
+        .video-stream {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box h3 {
+            color: #1976D2;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            list-style-position: inside;
+            color: #555;
+        }
+
+        .info-box li {
+            margin: 5px 0;
+        }
+
+        .timestamp {
+            text-align: center;
+            color: #999;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .status-bar {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 ESP32-CAM Face Detection</h1>
+        <p class="subtitle">Real-time Face Detection System</p>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-indicator active" id="serverStatus"></div>
+                <span>Server: <strong id="serverStatusText">Active</strong></span>
+            </div>
+            <div class="status-item">
+                <div class="status-indicator inactive" id="streamStatus"></div>
+                <span>Stream: <strong id="streamStatusText">Waiting...</strong></span>
+            </div>
+            <div class="status-item">
+                <span>Faces Detected: <strong id="faceCount">0</strong></span>
+            </div>
+        </div>
+
+        <!-- Video Stream -->
+        <div class="video-container">
+            <img src="/stream" alt="Video Stream" class="video-stream" id="videoStream" 
+                 onerror="handleStreamError()" onload="handleStreamLoad()">
+            <div class="loading" id="loadingText">
+                📡 Waiting for ESP32-CAM...
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="btn btn-primary" onclick="refreshStream()">🔄 Refresh Stream</button>
+            <a href="/latest" target="_blank" class="btn btn-secondary">📸 View Latest Image</a>
+            <button class="btn btn-secondary" onclick="checkStatus()">✅ Check Status</button>
+        </div>
+
+        <div class="timestamp" id="timestamp">
+            Last updated: <span id="lastUpdate">-</span>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+            <h3>📋 Hướng dẫn sử dụng:</h3>
+            <ul>
+                <li><strong>Endpoint Upload:</strong> POST ảnh từ ESP32-CAM đến <code>http://192.168.1.25:5000/upload</code></li>
+                <li><strong>Format:</strong> JPEG binary hoặc base64 JSON</li>
+                <li><strong>Response:</strong> Server sẽ trả về số khuôn mặt phát hiện được</li>
+                <li><strong>Stream:</strong> Video hiển thị khung hình với khuôn mặt được đánh dấu</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let streamActive = false;
+
+        // Xử lý khi stream load thành công
+        function handleStreamLoad() {
+            streamActive = true;
+            document.getElementById('loadingText').style.display = 'none';
+            document.getElementById('streamStatus').classList.remove('inactive');
+            document.getElementById('streamStatus').classList.add('active');
+            document.getElementById('streamStatusText').textContent = 'Active';
+            updateTimestamp();
+        }
+
+        // Xử lý khi stream gặp lỗi
+        function handleStreamError() {
+            streamActive = false;
+            document.getElementById('loadingText').style.display = 'block';
+            document.getElementById('streamStatus').classList.remove('active');
+            document.getElementById('streamStatus').classList.add('inactive');
+            document.getElementById('streamStatusText').textContent = 'Waiting...';
+        }
+
+        // Refresh stream
+        function refreshStream() {
+            const img = document.getElementById('videoStream');
+            const timestamp = new Date().getTime();
+            img.src = '/stream?t=' + timestamp;
+            document.getElementById('loadingText').style.display = 'block';
+        }
+
+        // Check server status
+        function checkStatus() {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    alert('Server Status:\n' + 
+                          'Status: ' + data.status + '\n' +
+                          'Has Frame: ' + data.has_frame + '\n' +
+                          'Detected Image: ' + data.detected_image_exists);
+                })
+                .catch(error => {
+                    alert('Error checking status: ' + error);
+                });
+        }
+
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleString('vi-VN');
+        }
+
+        // Update timestamp every second
+        setInterval(() => {
+            if (streamActive) {
+                updateTimestamp();
+            }
+        }, 1000);
+
+        // Auto refresh stream every 30 seconds if inactive
+        setInterval(() => {
+            if (!streamActive) {
+                refreshStream();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
