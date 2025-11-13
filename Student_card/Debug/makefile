@@ -60,8 +60,8 @@ all: main-build
 main-build: Student_card.elf secondary-outputs
 
 # Tool invocations
-Student_card.elf Student_card.map: $(OBJS) $(USER_OBJS) D:\STM32IDE\Student_card\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Student_card.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"D:\STM32IDE\Student_card\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Student_card.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Student_card.elf Student_card.map: $(OBJS) $(USER_OBJS) D:\GitHub\AIoT-Face_And_Order\Student_card\STM32F103C8TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Student_card.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"D:\GitHub\AIoT-Face_And_Order\Student_card\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Student_card.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

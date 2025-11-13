@@ -1,0 +1,12 @@
+../Core/Src/MFRC522_STM32.c:6:6:MFRC522_Init	3
+../Core/Src/MFRC522_STM32.c:49:6:MFRC522_AntennaOff	1
+../Core/Src/MFRC522_STM32.c:54:6:MFRC522_AntennaOn	1
+../Core/Src/MFRC522_STM32.c:59:9:MFRC522_ReadReg	1
+../Core/Src/MFRC522_STM32.c:71:6:MFRC522_WriteReg	1
+../Core/Src/MFRC522_STM32.c:81:6:MFRC522_SetBitMask	1
+../Core/Src/MFRC522_STM32.c:87:6:MFRC522_ClearBitMask	1
+../Core/Src/MFRC522_STM32.c:93:9:MFRC522_RequestA	5
+../Core/Src/MFRC522_STM32.c:144:9:MFRC522_Anticoll	7
+../Core/Src/MFRC522_STM32.c:201:9:MFRC522_ReadUid	3
+../Core/Src/MFRC522_STM32.c:217:9:waitcardRemoval	2
+../Core/Src/MFRC522_STM32.c:228:9:waitcardDetect	2
