@@ -19,7 +19,7 @@ const char* password = "abcd1232";
 // Flask Server URL
 // ⚠️ QUAN TRỌNG: Sử dụng IP WiFi vì ESP32-CAM kết nối qua WiFi
 // IP WiFi của máy: 192.168.1.25 (kiểm tra bằng: ipconfig)
-const char* serverUrl = "http://192.168.1.25:5000/upload";
+const char* serverUrl = "http://192.168.1.24:5000/upload";
 
 // Camera pins cho ESP32-CAM AI-Thinker
 #define PWDN_GPIO_NUM     32

@@ -1487,25 +1487,23 @@ int main(void)
  8000a56:	4839      	ldr	r0, [pc, #228]	@ (8000b3c <main+0x154>)
  8000a58:	f002 ff0c 	bl	8003874 <iprintf>
 
-        // 3. Kiem tra ID the va bat LED tuong ung (Theo chan trong anh Pinout)
-
         // Vi du 1: The Master -> Bat den Xanh (PA8)
-        if ((uid[0] == 0x06) && (uid[1] == 0x04) && (uid[2] == 0x27) && (uid[3] == 0x1F)) {
+        if ((uid[0] == 0x20) && (uid[1] == 0x00) && (uid[2] == 0x01) && (uid[3] == 0xE4)) {
  8000a5c:	4b36      	ldr	r3, [pc, #216]	@ (8000b38 <main+0x150>)
  8000a5e:	781b      	ldrb	r3, [r3, #0]
- 8000a60:	2b06      	cmp	r3, #6
+ 8000a60:	2b20      	cmp	r3, #32
  8000a62:	d11f      	bne.n	8000aa4 <main+0xbc>
  8000a64:	4b34      	ldr	r3, [pc, #208]	@ (8000b38 <main+0x150>)
  8000a66:	785b      	ldrb	r3, [r3, #1]
- 8000a68:	2b04      	cmp	r3, #4
+ 8000a68:	2b00      	cmp	r3, #0
  8000a6a:	d11b      	bne.n	8000aa4 <main+0xbc>
  8000a6c:	4b32      	ldr	r3, [pc, #200]	@ (8000b38 <main+0x150>)
  8000a6e:	789b      	ldrb	r3, [r3, #2]
- 8000a70:	2b27      	cmp	r3, #39	@ 0x27
+ 8000a70:	2b01      	cmp	r3, #1
  8000a72:	d117      	bne.n	8000aa4 <main+0xbc>
  8000a74:	4b30      	ldr	r3, [pc, #192]	@ (8000b38 <main+0x150>)
  8000a76:	78db      	ldrb	r3, [r3, #3]
- 8000a78:	2b1f      	cmp	r3, #31
+ 8000a78:	2be4      	cmp	r3, #228	@ 0xe4
  8000a7a:	d113      	bne.n	8000aa4 <main+0xbc>
             printf("Access Granted - GREEN LED ON\n");
  8000a7c:	4830      	ldr	r0, [pc, #192]	@ (8000b40 <main+0x158>)
